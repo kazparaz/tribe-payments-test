@@ -21,6 +21,7 @@ export const CryptoTable = (): JSX.Element => {
 
   useEffect(() => {
     apiState.set(api.getCurrencies(1))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -28,6 +29,7 @@ export const CryptoTable = (): JSX.Element => {
       const newItems = apiState.value.items.map((item) => ({ ...item })) // remove proxies by cloning
       setItems((items) => [...items, ...newItems])
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiState.promised])
 
   return (
@@ -54,6 +56,7 @@ export const CryptoTable = (): JSX.Element => {
             return (
               <tr key={item.id}>
                 <td className='icon'>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={item.logo}
                     alt={`${item.name} logo`}
