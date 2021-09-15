@@ -1,6 +1,6 @@
 import { NextApiRequest } from 'next'
 
-export type CoinMarketApiStatus = {
+export type CmcResponseStatus = {
   credit_count: number
   elapsed: number
   error_code: number
@@ -8,8 +8,8 @@ export type CoinMarketApiStatus = {
   timestamp: string
 }
 
-export type CmcApiError = {
-  status: CoinMarketApiStatus
+export type CmcResponseError = {
+  status: CmcResponseStatus
 }
 
 export const CMC_PRO_API_KEY = 'f519c4c4-a383-4bf9-846f-4ac26a85d562'

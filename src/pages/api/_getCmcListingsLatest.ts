@@ -1,7 +1,7 @@
 import {
   CMC_PRO_API_KEY,
-  CmcApiError,
-  CoinMarketApiStatus,
+  CmcResponseError,
+  CmcResponseStatus,
   queryParamsToString,
 } from './_helpers'
 
@@ -16,18 +16,12 @@ type CmcListingsLatestQueryParams = {
 }
 
 // Not all properties typed
-type CmcListingsLatestSuccess = {
+type CmcListingsLatestResponseSuccess = {
   data: {
-    id: string // The unique CoinMarketCap ID for this cryptocurrency.
+    id: number // The unique CoinMarketCap ID for this cryptocurrency.
     name: string // The name of this cryptocurrency.
     symbol: string // The ticker symbol for this cryptocurrency.
     slug: string // The web URL friendly shorthand version of this cryptocurrency name.
-    cmc_rank: number // The cryptocurrency's CoinMarketCap rank by market cap.
-    num_market_pairs: number // The number of active trading pairs available for this cryptocurrency across supported exchanges.
-    circulating_supply: number // The approximate number of coins circulating for this cryptocurrency.
-    total_supply: number // The approximate total amount of coins in existence right now (minus any coins that have been verifiably burned).
-    market_cap_by_total_supply?: number // The market cap by total supply.
-    max_supply: number // The expected maximum limit of coins ever to be available for this cryptocurrency.
     quote: Record<
       string,
       {
@@ -37,12 +31,15 @@ type CmcListingsLatestSuccess = {
       }
     >
   }[]
-  status: CoinMarketApiStatus
+  status: CmcResponseStatus
 }
 
 export function getCmcListingsLatest(
   queryParams: CmcListingsLatestQueryParams
-): Promise<{ json: CmcApiError | CmcListingsLatestSuccess; status: number }> {
+): Promise<{
+  json: CmcResponseError | CmcListingsLatestResponseSuccess
+  status: number
+}> {
   const queryString = queryParamsToString(queryParams)
   return fetch(
     `https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?${queryString}`,
@@ -54,9 +51,11 @@ export function getCmcListingsLatest(
       },
     }
   ).then((r) =>
-    r.json().then((json: CmcApiError | CmcListingsLatestSuccess) => ({
-      json,
-      status: r.status,
-    }))
+    r
+      .json()
+      .then((json: CmcResponseError | CmcListingsLatestResponseSuccess) => ({
+        json,
+        status: r.status,
+      }))
   )
 }
