@@ -1,14 +1,15 @@
 import { useHookstate } from '@hookstate/core'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { api } from '../api'
-import { useBreakpoint, useWindowSize } from '../hooks'
+import { useBreakpoint } from '../hooks'
 import { GetCurrenciesResponse } from '../pages/api/getCurrencies'
-import { breakpoints } from '../styles/variables'
+import { breakpoints, colors } from '../styles/variables'
 
 export const CryptoTable = (): JSX.Element => {
-  const { isTablet, isMobile, isDesktop } = useBreakpoint()
+  const { isTablet, isDesktop } = useBreakpoint()
 
   const currencies = useHookstate<GetCurrenciesResponse | undefined>(undefined)
+
   useEffect(() => {
     currencies.set(api.getCurrencies(1))
   }, [])
@@ -29,28 +30,47 @@ export const CryptoTable = (): JSX.Element => {
         <tbody>
           {!currencies.promised &&
             typeof currencies.value === 'object' &&
-            currencies.value.items.map((item) => (
-              <tr key={item.id}>
-                <td>
-                  <img
-                    src={item.logo}
-                    alt={`${item.name} logo`}
-                    width={32}
-                    height={32}
-                  />
-                </td>
-                <td>
-                  {item.name} ({item.symbol})
-                </td>
-                {(isDesktop || isTablet) && (
-                  <td>
-                    {item.price.toFixed(4)} {item.currency}
+            currencies.value.items.map((item) => {
+              const changeDirection =
+                item.percent_change_24h > 0
+                  ? 'up'
+                  : item.percent_change_24h < 0
+                  ? 'down'
+                  : 'none'
+              return (
+                <tr key={item.id}>
+                  <td className='icon'>
+                    <img
+                      src={item.logo}
+                      alt={`${item.name} logo`}
+                      width={32}
+                      height={32}
+                    />
                   </td>
-                )}
-                {isDesktop && <td>{item.volume_24h}</td>}
-                <td>{item.percent_change_24h.toFixed(3)}%</td>
-              </tr>
-            ))}
+                  <td className='name'>
+                    {item.name} ({item.symbol})
+                  </td>
+                  {(isDesktop || isTablet) && (
+                    <td className='price'>
+                      {item.price.toFixed(4)} {item.currency}
+                    </td>
+                  )}
+                  {isDesktop && <td className='volume'>{item.volume_24h}</td>}
+                  <td className='change'>
+                    <span className={`changeDirection ${changeDirection}`}>
+                      {
+                        {
+                          up: '🠕',
+                          down: '🠗',
+                          none: '',
+                        }[changeDirection]
+                      }
+                    </span>
+                    {item.percent_change_24h.toFixed(3)}%
+                  </td>
+                </tr>
+              )
+            })}
         </tbody>
       </table>
 
@@ -84,12 +104,32 @@ export const CryptoTable = (): JSX.Element => {
           width: 30%;
         }
 
+        td.name {
+          color: ${colors.purple};
+        }
+
         .price {
           width: 25%;
         }
 
         .volume {
           width: 30%;
+        }
+
+        .changeDirection {
+          padding-right: 5px;
+        }
+
+        .changeDirection.none {
+          display: none;
+        }
+
+        .changeDirection.up {
+          color: ${colors.green};
+        }
+
+        .changeDirection.down {
+          color: ${colors.red};
         }
 
         @media (max-width: ${breakpoints.tablet}px) {
