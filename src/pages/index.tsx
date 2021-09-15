@@ -1,13 +1,6 @@
 import type { NextPage } from 'next'
-import { DocumentHead } from '../components/DocumentHead'
+import { CryptoApp } from '../components/CryptoApp'
 
-const PageHome: NextPage = () => {
-  return (
-    <>
-      <DocumentHead pageTitle='Home' />
-      <main>Content</main>
-    </>
-  )
-}
+const PageHome: NextPage = () => <CryptoApp />
 
 export default PageHome
