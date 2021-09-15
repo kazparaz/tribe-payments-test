@@ -1,21 +1,37 @@
 import { useHookstate } from '@hookstate/core'
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { api } from '../api'
 import { useBreakpoint } from '../hooks'
-import { GetCurrenciesResponse } from '../pages/api/getCurrencies'
+import {
+  GetCurrenciesItem,
+  GetCurrenciesResponse,
+} from '../pages/api/getCurrencies'
 import { breakpoints, colors } from '../styles/variables'
 
 export const CryptoTable = (): JSX.Element => {
   const { isTablet, isDesktop } = useBreakpoint()
-
-  const currencies = useHookstate<GetCurrenciesResponse | undefined>(undefined)
+  const [items, setItems] = useState<GetCurrenciesItem[]>([])
+  const apiState = useHookstate<GetCurrenciesResponse | undefined>(undefined)
+  const nextPage =
+    !apiState.promised &&
+    typeof apiState.value === 'object' &&
+    typeof apiState.value.nextPage === 'number'
+      ? apiState.value.nextPage
+      : undefined
 
   useEffect(() => {
-    currencies.set(api.getCurrencies(1))
+    apiState.set(api.getCurrencies(1))
   }, [])
 
+  useEffect(() => {
+    if (!apiState.promised && typeof apiState.value === 'object') {
+      const newItems = apiState.value.items.map((item) => ({ ...item })) // remove proxies by cloning
+      setItems((items) => [...items, ...newItems])
+    }
+  }, [apiState.promised])
+
   return (
-    <>
+    <div className='root'>
       <table>
         <thead>
           <tr>
@@ -28,56 +44,66 @@ export const CryptoTable = (): JSX.Element => {
         </thead>
 
         <tbody>
-          {!currencies.promised &&
-            typeof currencies.value === 'object' &&
-            currencies.value.items.map((item) => {
-              const changeDirection =
-                item.percent_change_24h > 0
-                  ? 'up'
-                  : item.percent_change_24h < 0
-                  ? 'down'
-                  : 'none'
-              return (
-                <tr key={item.id}>
-                  <td className='icon'>
-                    <img
-                      src={item.logo}
-                      alt={`${item.name} logo`}
-                      width={32}
-                      height={32}
-                    />
+          {items.map((item) => {
+            const changeDirection =
+              item.percent_change_24h > 0
+                ? 'up'
+                : item.percent_change_24h < 0
+                ? 'down'
+                : 'none'
+            return (
+              <tr key={item.id}>
+                <td className='icon'>
+                  <img
+                    src={item.logo}
+                    alt={`${item.name} logo`}
+                    width={32}
+                    height={32}
+                  />
+                </td>
+                <td className='name'>
+                  {item.name} ({item.symbol})
+                </td>
+                {(isDesktop || isTablet) && (
+                  <td className='price'>
+                    {item.price.toFixed(4)} {item.currency}
                   </td>
-                  <td className='name'>
-                    {item.name} ({item.symbol})
-                  </td>
-                  {(isDesktop || isTablet) && (
-                    <td className='price'>
-                      {item.price.toFixed(4)} {item.currency}
-                    </td>
-                  )}
-                  {isDesktop && <td className='volume'>{item.volume_24h}</td>}
-                  <td className='change'>
-                    <span className={`changeDirection ${changeDirection}`}>
+                )}
+                {isDesktop && <td className='volume'>{item.volume_24h}</td>}
+                <td className='change'>
+                  <span className={`changeDirection ${changeDirection}`}>
+                    {
                       {
-                        {
-                          up: '🠕',
-                          down: '🠗',
-                          none: '',
-                        }[changeDirection]
-                      }
-                    </span>
-                    {item.percent_change_24h.toFixed(3)}%
-                  </td>
-                </tr>
-              )
-            })}
+                        up: '🠕',
+                        down: '🠗',
+                        none: '',
+                      }[changeDirection]
+                    }
+                  </span>
+                  {item.percent_change_24h.toFixed(3)}%
+                </td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
 
+      <button
+        disabled={apiState.promised || !nextPage}
+        onClick={() =>
+          nextPage ? apiState.set(api.getCurrencies(nextPage)) : undefined
+        }
+      >
+        Load more
+      </button>
+
       <style jsx>{`
+        .root {
+          padding: 20px;
+        }
+
         table {
           width: 100%;
-          padding: 20px;
           text-align: left;
           border-spacing: 10px;
           border-collapse: separate;
@@ -132,6 +158,11 @@ export const CryptoTable = (): JSX.Element => {
           color: ${colors.red};
         }
 
+        button {
+          display: block;
+          margin: 20px auto 0;
+        }
+
         @media (max-width: ${breakpoints.tablet}px) {
           .name {
             width: 50%;
@@ -148,6 +179,6 @@ export const CryptoTable = (): JSX.Element => {
           }
         }
       `}</style>
-    </>
+    </div>
   )
 }

@@ -28,6 +28,22 @@ export const GlobalStyles = (): JSX.Element => {
       h4 {
         color: ${colors.purple};
       }
+
+      button {
+        height: 40px;
+        line-height: 1;
+        padding: 0 10px;
+        background: ${colors.purple};
+        color: ${colors.white};
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      button:disabled {
+        opacity: 0.75;
+        cursor: default;
+      }
     `}</style>
   )
 }
